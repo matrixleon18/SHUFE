@@ -82,6 +82,7 @@ for epoch in range(EPOCH):
         loss.backward()
         optimizer.step()
 
+        # 用训练过的模型跑一下测试数据
         if step % 50 == 0:
             test_output = rnn(test_x)
             pred_y = torch.max(test_output, 1)[1].data.numpy()
