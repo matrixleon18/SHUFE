@@ -1,6 +1,6 @@
 # encoding=GBK
 """
-创建神经网络并绘图
+创建神经网进行分类
 """
 
 import torch
@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import time
 
-NUM_TOTAL_POINTS = 40
+NUM_TOTAL_POINTS = 80
 
 n_data = torch.ones(int(NUM_TOTAL_POINTS/2), 2)                                     # 创建一群100个点，数据基准坐标(1,1)
 
