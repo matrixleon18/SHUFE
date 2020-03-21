@@ -7,8 +7,9 @@
 
 import numpy as np
 
-def calc_loss(b, w, points):
+def loss_func(b, w, points):
     """
+    定义损失函数
     根据给出的参数ｂ和ｗ还有观测点，来计算方程到观测点的误差.
     这里假设的原函数是 y = w x + b
     :param b:  　   常数项
@@ -27,6 +28,7 @@ def calc_loss(b, w, points):
 
 def step_gradient(b_current, w_current, points, learning_rate):
     """
+    整体梯度下降法来逼近 w 和 b
     对损失函数 (wx+b-y)**2 输入所有观测点，对ｗ和ｂ进行平均梯度逼近：
     主要的优化方式就是：
         让损失函数对 w 和 b 分别求偏导, 得到了在ｗ和ｂ方向上的偏导函数
@@ -36,7 +38,7 @@ def step_gradient(b_current, w_current, points, learning_rate):
         依次把观测点数据带入，就是在观测点处的梯度向量。
             也就是在观测点处的梯度下降最快方向的向量。
             每次把ｗ 和 b 的在梯度方向上值加起来，
-        遍历完所有的点之后就得到总的梯度。
+        遍历完所有的点之后就得到总的梯度。(这就是标准的梯度下降法)
         把这个梯度总和求平均值。得到的就是所有点梯度计算出来平均的方向
         再乘以learning_rate,就是取这个方向上一个非常小的步长，免得跑过头了
         用ｗ和ｂ减去这个非常小的变化量。逼近一次。
@@ -104,7 +106,7 @@ def run():
 
     print("b is : {}  w is : {}".format(b, w))
 
-    _loss = calc_loss(b, w, points)
+    _loss = loss_func(b, w, points)
 
     print("loss is : ", _loss)
 
