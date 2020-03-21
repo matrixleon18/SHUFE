@@ -1,7 +1,7 @@
 # encoding=GBK
 
 """
-神经网络批训练
+神经网络的批训练(batch)
 """
 
 import torch
