@@ -1,7 +1,7 @@
 # encoding=GBK
 
 """
-如和使用梯度下降法来求解二元一次方程组的参数
+torch几个函数
 """
 import numpy as np
 import torch
