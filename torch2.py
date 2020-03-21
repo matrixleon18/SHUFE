@@ -1,4 +1,10 @@
-#encoding=GBK
+# encoding=GBK
+
+
+"""
+利用torch.autograd.grad求二阶导
+"""
+
 
 import torch
 from torch import autograd
