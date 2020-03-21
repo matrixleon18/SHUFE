@@ -1,4 +1,9 @@
+# encoding=GBK
 
+
+"""
+比较CPU和GPU模式下Torch速度
+"""
 
 import torch
 import time
