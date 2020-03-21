@@ -1,7 +1,7 @@
 # encoding=GBK
 
 """
-绘制Torch常用激活函数
+绘制Torch常用4种激活函数
 """
 import torch
 import torch.nn.functional as F
