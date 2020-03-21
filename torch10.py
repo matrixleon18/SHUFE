@@ -14,7 +14,7 @@ y = torch.linspace(10, 1, 10)
 
 torch_data_set = torch.utils.data.TensorDataset(x, y)  # x用来训练; y用来计算误差;
 
-loader = torch.utils.data.DataLoader(
+loader = torch.utils.data.DataLoader(           # 是一个可迭代对象，使用iter()访问，不能使用next()访问
     dataset=torch_data_set,                     # 从中加载数据的数据集。
     batch_size=BATCH_SIZE,                      # 每一批训练的数据个数。
     shuffle=True,                               # 是否乱序取样（不是随机取样）。
@@ -29,6 +29,6 @@ loader = torch.utils.data.DataLoader(
 )
 
 for epoch in range(3):
-    for step, (batch_x, batch_y) in enumerate(loader):
+    for step, (batch_x, batch_y) in enumerate(loader):  # 对可迭代对象访问
         # training...
         print("epoch: {}; step: {}; batch_x: {}; batch_y: {}".format(epoch, step, batch_x, batch_y))
