@@ -1,7 +1,7 @@
 # encoding=GBK
 
 """
-神经网络优化器
+四种优化器效果比较
 """
 
 import torch
