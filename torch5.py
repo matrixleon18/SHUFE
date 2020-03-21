@@ -1,19 +1,26 @@
+# encoding=GBK
 
+"""
+绘制Torch常用激活函数
+"""
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
 
-####### Fake data ##########
+
+# Generate data
 x = torch.linspace(-5, 5, 200)
 x = Variable(x)
 x_np = x.data.numpy()
 
+# Call Activation function
 y_relu = torch.relu(x).data.numpy()
 y_sigmoid = torch.sigmoid(x).data.numpy()
 y_tanh = torch.tanh(x).data.numpy()
 y_softplus = F.softplus(x).data.numpy()
 
+# 绘制图形
 plt.figure(1, figsize=(8, 6))
 plt.subplot(221)
 plt.plot(x_np, y_relu, c='red', label='relu')
