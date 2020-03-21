@@ -16,22 +16,22 @@ import torch.utils.data.dataloader
 
 # 超参数
 EPOCH = 1                       # 训练全数据集的次数
-BATCH_SIZE = 32                 # 每次取的batch的数据大小
+BATCH_SIZE = 64                 # 每次取的batch的数据大小
 TIME_STEP = 28                  # RNN考虑的时间节点。因为每次抽取图像一行数据处理。这里就是图像的高度。
 INPUT_SIZE = 28                 # RNN每次处理的数据量。因为是一次一行数据，那就是图像的宽度
-LR = 0.0005
+LR = 0.001
 DOWLOAD_MNIST = False
 HIDDEN_LAYER_FEATURES = 128
 
 # 准备训练和测试数据
+# with torch.no_grad():
 train_data = datasets.MNIST("./mnist", train=True, transform=transforms.ToTensor(), download=DOWLOAD_MNIST)
 test_data = datasets.MNIST("./mnist", train=False, transform=transforms.ToTensor(), download=DOWLOAD_MNIST)
+test_x = Variable(test_data.data).type(torch.FloatTensor)[:1000]/255
+test_y = test_data.targets.numpy().squeeze()[:1000]
 
 train_loader = torch.utils.data.dataloader.DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
 
-with torch.no_grad():
-    test_x = Variable(test_data.data).type(torch.FloatTensor)[:2000]/255
-    test_y = test_data.targets.numpy().squeeze()[:2000]
 
 # 定义RNN网络结构的类
 class RNN(nn.Module):
@@ -47,8 +47,8 @@ class RNN(nn.Module):
             hidden_size=HIDDEN_LAYER_FEATURES,          # 隐藏层的特征维度
             num_layers=1,                               # RNN 具有的细胞的数量，也就是lstm的隐藏层的数量
             batch_first=True,                           # LSTM接受的输入数据格式必须是3维的。如果是True就意味着输入输出数据格式为 (batch, seq, feature)
-            dropout=0,                                  # 除了最后一层，每一层的输出都要dropout,默认为0
-            bidirectional=False,                        # True则为双向LSTM，默认为False
+            # dropout=0,                                  # 除了最后一层，每一层的输出都要dropout,默认为0
+            # bidirectional=False,                        # True则为双向LSTM，默认为False
         )
 
         self.out = nn.Linear(HIDDEN_LAYER_FEATURES, 10) # 输入的是64特征维度，输出是10特征维度.因为是0~9共计10个数字的分类
@@ -73,18 +73,19 @@ loss_func = torch.nn.CrossEntropyLoss()
 
 # 开始训练
 for epoch in range(EPOCH):
-    for step, (x, y) in enumerate(train_loader):
-        b_x = Variable(x.view(-1, 28, 28))          # 把输入的数据再转成(batch, sequence, input)的格式
-        b_y = Variable(y)
+    for step, (b_x, b_y) in enumerate(train_loader):
+        b_x = b_x.view(-1, 28, 28)          # 把输入的数据再转成(batch, sequence, input)的格式
+        # b_y = Variable(y)
         output = rnn(b_x)
         loss = loss_func(output, b_y)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         if step % 50 == 0:
             test_output = rnn(test_x)
-            pred_y = torch.max(test_output, 1)[1].data.numpy().squeeze()
-            accuracy = sum(pred_y == test_y) / test_y.size
+            pred_y = torch.max(test_output, 1)[1].data.numpy()
+            accuracy = float((pred_y == test_y).astype(int).sum()) / test_y.size
             print("Epoch: {}, loss: {}, accuracy: {}".format(epoch, round(float(loss.data), 3), accuracy))
 
 test_output = rnn(test_x[:10])
