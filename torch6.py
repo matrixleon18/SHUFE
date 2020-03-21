@@ -1,5 +1,9 @@
 # encoding=GBK
 
+"""
+用神经网络来拟合二次曲线
+"""
+
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -41,7 +45,7 @@ plt.show()
 optimizer = torch.optim.SGD(net.parameters(), lr=0.2)                   # 定义了优化器：优化对象是神经网络的参数，学习率是0.2
 loss_func = torch.nn.MSELoss()                                          # 定义了损失函数：均方差损失函数 MeanSquareError
 
-for t in range(500):                                                    # 循环计算500次
+for t in range(100):                                                    # 循环计算200次
     prediction = net(x)                                                 # 根据神经网络计算出了预测值
     loss = loss_func(prediction, y)                                     # 计算预测值和实际值之间的差值
 
