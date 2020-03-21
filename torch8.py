@@ -28,6 +28,7 @@ x, y = Variable(x), Variable(y)                                                 
 # plt.scatter(x.data.numpy()[:, 0], x.data.numpy()[:, 1], c=y.data.numpy(), s=100, lw=0, cmap='RdYlGn')
 # plt.show()
 
+# 传统创建神经网络方式
 class Net(torch.nn.Module):
     def __init__(self, n_feature, n_hidden, n_output):
         super(Net, self).__init__()
@@ -79,7 +80,7 @@ print(net)                                                  # 只会显示hidden和pr
 # plt.ioff()
 # plt.show()
 
-# method 2
+# 快速创建神经网络方式
 net2 = torch.nn.Sequential(                             # 创建一个神经网络序列
     torch.nn.Linear(in_features=2, out_features=10),    # 创建第一个线性模型y=xAT+b网络；输入是２个值，有１０个神经元，输出１０个值
     torch.nn.ReLU(),                                    # 创建一个激励函数实例；这里调用的是ReLU的类。生成一个实例变量。
