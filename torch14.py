@@ -64,7 +64,13 @@ for step in range(200):                                                 # 计算２
     h_state = Variable(h_state.data)                                    # 把tensor中的数据取出来
 
     loss = loss_func(prediction, y)
-    # print(loss.data.float())
+    print(loss.data.float())
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
+
+    plt.ion()                                                           # 把实际图和预测图动态打印出来
+    plt.plot(steps, y_np, color='b')
+    plt.plot(steps, np.squeeze(prediction.data.numpy()), color='r')
+    plt.show()
+    plt.pause(0.30)
