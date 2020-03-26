@@ -64,25 +64,43 @@
 #
 #
 
+
 # __init__ & __call__
-class X(object):
-    def __init__(self, a, b, range):
-        self.a = a
-        self.b = b
-        self.range = range
-        print('__init__ function')
+# class X(object):
+#     def __init__(self, a, b, range):
+#         self.a = a
+#         self.b = b
+#         self.range = range
+#         print('__init__ function')
+#
+#     def __call__(self, a, b):
+#         self.a = a
+#         self.b = b
+#         print('__call__ function')
+#
+#     def __del__(self):
+#         del self.a
+#         del self.b
+#         del self.range
+#         print('__del__ function')
+#
+#
+# x_instance = X(1, 2, 3)
+# x_instance(1, 2)
 
-    def __call__(self, a, b):
-        self.a = a
-        self.b = b
+
+class A(object):
+    def forward(self, inputs):
+        print('forward function')
+        print('forward param: {}'.format(inputs))
+        return inputs
+
+    def __call__(self, param):
         print('__call__ function')
+        print('__call__ param: {}'.format(param))
+        ret = self.forward(param)
+        return ret
 
-    def __del__(self):
-        del self.a
-        del self.b
-        del self.range
-        print('__del__ function')
-
-
-x_instance = X(1, 2, 3)
-x_instance(1, 2)
+a = A()
+input_param = a('i')
+print('parameter of a is {}'.format(input_param))
