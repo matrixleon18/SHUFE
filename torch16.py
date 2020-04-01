@@ -32,13 +32,16 @@ class AutoEncoder(torch.nn.Module):
     def __init__(self):
         super(AutoEncoder, self).__init__()
         self.encoder = torch.nn.Sequential(                         # 这是压缩器
-            torch.nn.Linear(in_features=28*28, out_features=128),
+            torch.nn.Linear(in_features=28*28, out_features=256),
+            torch.nn.Tanh(),
+            torch.nn.Linear(in_features=256, out_features=128),
             torch.nn.Tanh(),
             torch.nn.Linear(in_features=128, out_features=64),
             torch.nn.Tanh(),
             torch.nn.Linear(in_features=64, out_features=32),
             torch.nn.Tanh(),
-            torch.nn.Linear(in_features=32, out_features=3)         # 输出3或5的维度对loss差别不大
+            torch.nn.Linear(in_features=32, out_features=3),         # 输出3或5的维度对loss差别不大
+            torch.nn.Tanh()
         )
 
         self.decoder = torch.nn.Sequential(                         # 这是解压器
@@ -48,8 +51,10 @@ class AutoEncoder(torch.nn.Module):
             torch.nn.Tanh(),
             torch.nn.Linear(in_features=64, out_features=128),
             torch.nn.Tanh(),
-            torch.nn.Linear(in_features=128, out_features=28*28),
-            # torch.nn.Sigmoid()                                   # 输出的是(0,1)的概率
+            torch.nn.Linear(in_features=128, out_features=256),
+            torch.nn.Tanh(),
+            torch.nn.Linear(in_features=256, out_features=28*28),
+            torch.nn.Sigmoid()                                   # 输出的是(0,1)的概率
             # torch.nn.Tanh()                                      # 输出的是(0,1)的概率。和Sigmod差不多
         )
 
