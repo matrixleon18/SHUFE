@@ -52,7 +52,7 @@ def train():                                            # 训练模型
         a = np.random.choice(actions[s])                # 从对应的房间号里随机选一个动作
         s1 = a
         q[s, a] = rewards[s, a] + gama * q[s1].max()    # 这就是转移规则
-        s = s1
+        s = s1                                          # 继续往下前进
 
 
 def test(s):
