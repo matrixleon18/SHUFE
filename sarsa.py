@@ -65,9 +65,8 @@ def train():                                            # 训练模型
         a = np.random.choice(actions[s])                # 从对应的房间号里随机选一个动作 a
         s1 = a                                          # 要去的房间就是下一个状态 s1
         r = rewards[s, a]                               # 得到状态 s 下的动作 a 将会得到 的回报 r
-        # a1 = q[s1].argmax()
-        a1 = np.random.choice(actions[s1])
-        q[s, a] = r + gama * q[s1, a1]
+        a1 = np.random.choice(actions[s1])              # 在s1状态下随机选择一个动作
+        q[s, a] = r + gama * q[s1, a1]                  # 计算出q(s,a)
         s = s1                                          # 状态转移到了s1
 
 
