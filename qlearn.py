@@ -59,7 +59,7 @@ def test(s):
     print(q)
     print("=> {}".format(s))
     while s < 5:
-        s = q[s].argmax()                       # 得到最大值的参数
+        s = q[s].argmax()                               # 核心就是根据Q表来决定下一次的行动
         print("=> {}".format(s))
 
 for _ in range(EPOCH):         # 迭代训练
