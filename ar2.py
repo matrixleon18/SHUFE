@@ -1,11 +1,12 @@
 # encoding=GBK
 
+"""
+自回归模型－－相关性的值
+"""
 import tushare as ts
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
-hs300_data = ts.get_hist_data('399300')                 # 得到沪深３００日数据
+hs300_data = ts.get_hist_data('399300')                 # 得到沪深300的日数据
 values = pd.DataFrame(hs300_data['close'].to_list())    # 得到一个n行1列的dataframe
 print(values.shape)                                     # 打出形状 (608,1)
 df = pd.concat([values.shift(1), values], axis=1)       # 将第一列下移一格，把第二组数据按照列方式合并起来
