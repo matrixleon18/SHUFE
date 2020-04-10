@@ -48,7 +48,8 @@ for t in range(len(test)):
     print('predicted=%f, expected=%f' % (yhat, obs))
 error = mean_squared_error(test, predictions)
 print('Test MSE: %.3f' % error)
-# plot
+
+# 绘制实际和ARIMA模型的预测值
 plt.plot(test, color='blue')
 plt.plot(predictions, color='red')
 plt.show()

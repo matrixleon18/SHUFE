@@ -25,7 +25,7 @@ model = AR(train)
 # 训练AR模型
 model_fit = model.fit()
 print('Lag: %s' % model_fit.k_ar)
-print('Coefficients: %s' % model_fit.params)
+# print('Coefficients: %s' % model_fit.params)
 # 使用AR模型预测test
 predictions = model_fit.predict(start=len(train), end=len(train)+len(test)-1, dynamic=False)
 for i in range(len(predictions)):
@@ -33,7 +33,7 @@ for i in range(len(predictions)):
 # 计算模型的误差
 error = mean_squared_error(test, predictions)
 print('Test MSE: %.3f' % error)
-# 绘制实际和预测值
+# 绘制实际和AR模型预测值
 plt.plot(test, color='blue')                          # 用蓝色画出实际值
 plt.plot(predictions, color='red')                      # 用红色画出预测值
 plt.show()
@@ -64,7 +64,7 @@ for x in test_X:
 test_score = mean_squared_error(test_y, predictions)    # 计算实际和预测的误差（这是 t 和 t+1 之间的误差）
 print('Test MSE: %.3f' % test_score)
 
-# 绘制实际和预测值
+# 绘制实际和久性模型的预测值
 plt.plot(test_y, color='blue')                          # 用蓝色画出实际值
 plt.plot(predictions, color='red')                      # 用红色画出预测值
 plt.show()
