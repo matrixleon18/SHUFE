@@ -1,43 +1,54 @@
 
-
+# basic data type
+# int
 print(int(32))
+# float
 print(float(32))
+# string
 print(str(32))
+# bool: True/False
 print(bool(32))
+# nothing
 print()
+# bool
 print(32 == 0)
+# bool
+print(32 is 0)
+# bool
+print(32 and True)
+print(32 and False)
+print(0 and True)
+print(0 and False)
 
+# Tuple
+a = (1, 2, 3)
+# index start from 0
+print(a.index(2))
 
-a = (1,2,3)
+# list
+a = [1, 2, 3, 4, 5]
+b = list([1, 2, 3, 4, 5])
+print(a)
+print(b)
 
-a.index(2)
+# string
+b = 'a33bcde'
+print(b)
+# count how many char/str in the string
+print(b.count('3'))
+# find 1st char/str position in the string
+print(b.index('3'))
 
-# print(32 is 0)
+# convert string to tuple
+c = tuple('a33bcde')
+print(c)
 
-# print(32 and True)
-# print(32 and False)
-# print(0 and True)
-# print(0 and False)
+# convert string to list
+print(list(b))
 
-
-
-# a= [1,2,3,4,5]
-# b = list([1,2,3,4,5])
-# print(a)
-# print(b)
-
-
-# b=('a32bcde')
-# c=tuple('a32bcde')
-#
-# print(b)
-# print(c)
-# print(b.count(1))
-# print(b.index(3))
-# print(list(b))
-#
-# f =dict({'k1':1, 'k2':2, 'k3':3})
-# g = {'k1':1, 'k2':2, 'k3':3}
-#
-# print(f)
-# print(g)
+# dict
+f = dict({'k1': 1, 'k2': 2, 'k3': 3})
+g = {'k1': 1, 'k2': 2, 'k3': 3}
+# they are same
+print(f)
+print(g)
