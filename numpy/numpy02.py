@@ -1,5 +1,10 @@
 # encoding=GBK
 
+"""
+numpy 数据类型
+"""
+
+
 import numpy as np
 
 
