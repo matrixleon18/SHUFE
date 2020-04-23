@@ -68,7 +68,31 @@ print(np.random.rand(2, 3))     # 创建一个指定形状的ndarray对象，对象其中的值是[
 
 print(np.random.randn(2, 3))    # 创建一个指定形状的ndarray对象，对象其中的值是服从标准正态分布的随机数
 
+print(np.random.randint(low=0, high=5, size=(2, 3), dtype='I'))       # 在[low, high)之间取值创建指定形状的对象
 
+print(np.random.random(size=(2, 3)))      # 生成随机浮点数的ndarray
 
+print(np.random.choice((4, 3, 2, 1), size=None, replace=True, p=None))       # 从序列里按照p的概率选择
 
+print(np.random.seed(100))  # 指定了种子数，每次random出来的随机数一致。用于验证和测试。
+
+"""
+numpy.eye(N, M=None, k=0, dtype=<class‘float’>, order=’C’)
+N: 行数
+M：列数，默认等于N
+k：对角线索引：0（默认）为主对角线，正值是指上对角线，负值是指到下对角线
+order: {'C', 'F'}输出是否应存储在主要行（C样式）中或内存中的列主（Fortran样式）顺序
+"""
+print(np.eye(5))     # 这样生成了一个size为5的单位矩阵
+
+print(np.linspace(start=0, stop=10, num=5))         # 在[start, stop]之间创建5个间隔均匀的数字的array
+
+# 1）一个参数时，参数值为终点，起点取默认值0，步长取默认值1。
+# 2）两个参数时，第一个参数为起点，第二个参数为终点，步长取默认值1。
+# 3）三个参数时，第一个参数为起点，第二个参数为终点，第三个参数为步长。其中步长支持小数
+print(np.arange(0, 100, 3))
+
+np.arange(0, 100, 3).tofile('tmp.txt')           # 把产生的array写入到文件中
+
+print(np.fromfile('tmp.txt', dtype=np.int))      # 从文件中读取array。一定要指定数据类型，否则不一定正确。默认float
 
