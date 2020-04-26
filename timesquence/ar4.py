@@ -2,7 +2,7 @@
 
 
 """
-ar×Ô»Ø¹éÄ£ĞÍ£­£­ARCH
+ar×Ô»Ø¹éÄ£ĞÍ£­£­ARMA²ÎÊıµÄÈ·¶¨
 """
 
 import tushare as ts
@@ -37,11 +37,11 @@ change_data = np.array(hs300_data['p_change'])
 # print(t)
 
 # ¶ÔÊÕÅÌ¼Û±ä»¯½øĞĞ·ÖÎö¡£Õâ¸öÒ²¾ÍÊÇ¶ÔÓÚÊÕÅÌ¼ÛµÄ²î·ÖµÄ±ÈÀı¡£
-hs300_data['close'].plot()
-plt.show()
+# hs300_data['close'].plot()                                        # Õâ¸öÃ÷ÏÔ²»Æ½ÎÈ
+# plt.show()
 
-hs300_data['p_change'].plot()                                       # »æÖÆhs300ÈÕÕÇµø±ÈÀıÍ¼
-plt.show()
+# hs300_data['p_change'].plot()                                       # »æÖÆhs300ÈÕÕÇµø±ÈÀıÍ¼
+# plt.show()
 
 t = sm.tsa.stattools.adfuller(change_data)                          # adf¼ìÑéÊÇÓÃÀ´¼ìÑéĞòÁĞÊÇ·ñÆ½ÎÈµÄ·½Ê½ Ò»°ãÀ´ËµÊÇÊ±¼äĞòÁĞÖĞµÄÒ»ÖÖ¼ìÑé·½·¨
 # t =
@@ -51,20 +51,33 @@ t = sm.tsa.stattools.adfuller(change_data)                          # adf¼ìÑéÊÇÓ
 # 603,                                                                                  # µÚËÄ¸öÊÇÓÃÓÚADF»Ø¹éºÍ¼ÆËãµÄ¹Û²âÖµµÄ¸öÊı
 # {'1%': -3.441241137539733, '5%': -2.8663450276569797, '10%': -2.569328969112426},     # µÚÎå¸öÊÇÅäºÏµÚÒ»¸öÒ»Æğ¿´µÄ£¬ÊÇÔÚ99%£¬95%£¬90%ÖÃĞÅÇø¼äÏÂµÄÁÙ½çµÄADF¼ìÑéµÄÖµ¡£Èç¹ûµÚÒ»¸öÖµ±ÈµÚÎå¸öÖµĞ¡Ö¤Ã÷Æ½ÎÈ£¬·´ÕıÖ¤Ã÷²»Æ½ÎÈ¡£
 # 2031.4755668710231)
-
-print(t)
+# print(t)
 print("p-value: {}".format(t[1], 4))                                # p-value¼¸ºõÎª0Ğ¡ÓÚÏÔÖøË®Æ½5%£¬Òò´ËĞòÁĞÊÇÆ½ÎÈµÄ
 
-# sm.graphics.tsa.plot_acf(change_data, lags=20, ax=ax1)
-sm.graphics.tsa.plot_acf(change_data)
+fig = plt.figure(figsize=(10, 6))
+ax1 = fig.add_subplot(211)
+sm.graphics.tsa.plot_acf(change_data, lags=20, ax=ax1)                      # ÓĞ4¸ö½×³¬³öÁËÖÃĞÅ±ß½ç
+ax2 = fig.add_subplot(212)
+sm.graphics.tsa.plot_pacf(change_data, lags=20, ax=ax2)                     # ÓĞ7¸ö½×³¬³öÁËÖÃĞÅ±ß½ç¡£
 plt.show()
 
-sm.graphics.tsa.plot_pacf(change_data)                              #
-plt.show()
+# pq_list = [(0, 4), (1, 3), (2, 1), (7, 1), (3, 1), (4, 3)]                  # ×îºÃµÄÊÇ(1,3) ºÍÉÏÃæµÄacf,pacfÓĞÊ²Ã´¹ØÏµ£¿
+# for pq in pq_list:
+#     arma_pq = sm.tsa.ARMA(change_data, pq).fit(disp=0)
+#     print("arma_pq {} : {} {} {}".format(pq, round(arma_pq.aic, 2), round(arma_pq.bic, 2), round(arma_pq.hqic, 2)))
+
+# arr = np.arange(64, dtype=float).reshape(8, 8)
+# for p in range(0, 8):
+#     for q in range(0, 8):
+#         arma_pq = sm.tsa.ARMA(change_data, (p,q)).fit(disp=0)
+#         arr[p, q] = round(arma_pq.aic, 3)
+# print(arr.min())                                                                # ×îĞ¡µÄaicÊÇ2080.183
+# print(arr.argmin())                                                             # ¶ÔÓ¦µÄ×ø±êÊÇ13,Ò²¾ÍÊÇ[1,5], p=1, q=5
+# print(arr)
 
 
-order = (9, 0)
-model = sm.tsa.ARMA(change_data, order).fit()
+order = (1, 5)
+model = sm.tsa.ARMA(change_data, order).fit(disp=0)
 
 # ¼ÆËã¾ùÖµ·½³Ì²Ğ²î
 at = change_data - model.fittedvalues
