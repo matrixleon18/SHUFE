@@ -151,4 +151,4 @@ def forward_propagation(initialization="he"):
 
 if __name__ == '__main__':
     init_type=input("Please input parameters initiate type:")
-    forward_propagation('zeros')
+    forward_propagation(init_type)
