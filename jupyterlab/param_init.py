@@ -8,14 +8,14 @@ def initialize_parameters_zeros(layers_dims):
     """
     Arguments:
     layer_dims -- python array (list) containing the size of each layer.
-	Returns:
-	parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
-					W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
-					b1 -- bias vector of shape (layers_dims[1], 1)
-					...
-					WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
-					bL -- bias vector of shape (layers_dims[L], 1)
-	"""
+    Returns:
+    parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
+                    W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
+                    b1 -- bias vector of shape (layers_dims[1], 1)
+                    ...
+                    WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
+                    bL -- bias vector of shape (layers_dims[L], 1)
+    """
     parameters = {}
     L = len(layers_dims)  # number of layers in the network
 
@@ -28,16 +28,16 @@ def initialize_parameters_zeros(layers_dims):
 # 随机初始化
 def initialize_parameters_random(layers_dims):
     """
-	Arguments:
-	layer_dims -- python array (list) containing the size of each layer.
-	Returns:
-	parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
-					W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
-					b1 -- bias vector of shape (layers_dims[1], 1)
-					...
-					WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
-					bL -- bias vector of shape (layers_dims[L], 1)
-	"""
+    Arguments:
+    layer_dims -- python array (list) containing the size of each layer.
+    Returns:
+    parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
+                    W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
+                    b1 -- bias vector of shape (layers_dims[1], 1)
+                    ...
+                    WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
+                    bL -- bias vector of shape (layers_dims[L], 1)
+    """
     np.random.seed(3)  # This seed makes sure your "random" numbers will be the as ours
     parameters = {}
     L = len(layers_dims)  # integer representing the number of layers
@@ -50,16 +50,16 @@ def initialize_parameters_random(layers_dims):
 # xavier initialization
 def initialize_parameters_xavier(layers_dims):
     """
-	Arguments:
-	layer_dims -- python array (list) containing the size of each layer.
-	Returns:
-	parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
-					W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
-					b1 -- bias vector of shape (layers_dims[1], 1)
-					...
-					WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
-					bL -- bias vector of shape (layers_dims[L], 1)
-	"""
+    Arguments:
+    layer_dims -- python array (list) containing the size of each layer.
+    Returns:
+    parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
+                    W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
+                    b1 -- bias vector of shape (layers_dims[1], 1)
+                    ...
+                    WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
+                    bL -- bias vector of shape (layers_dims[L], 1)
+    """
     np.random.seed(3)
     parameters = {}
     L = len(layers_dims)  # integer representing the number of layers
@@ -72,16 +72,16 @@ def initialize_parameters_xavier(layers_dims):
 # He initialization
 def initialize_parameters_he(layers_dims):
     """
-	Arguments:
-	layer_dims -- python array (list) containing the size of each layer.
-	Returns:
-	parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
-					W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
-					b1 -- bias vector of shape (layers_dims[1], 1)
-					...
-					WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
-					bL -- bias vector of shape (layers_dims[L], 1)
-	"""
+    Arguments:
+    layer_dims -- python array (list) containing the size of each layer.
+    Returns:
+    parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
+                    W1 -- weight matrix of shape (layers_dims[1], layers_dims[0])
+                    b1 -- bias vector of shape (layers_dims[1], 1)
+                    ...
+                    WL -- weight matrix of shape (layers_dims[L], layers_dims[L-1])
+                    bL -- bias vector of shape (layers_dims[L], 1)
+    """
     np.random.seed(3)
     parameters = {}
     L = len(layers_dims)  # integer representing the number of layers
@@ -94,19 +94,19 @@ def initialize_parameters_he(layers_dims):
 
 def relu(Z):
     """
-	:param Z: Output of the linear layer
-	:return:
-	A: output of activation
-	"""
+    :param Z: Output of the linear layer
+    :return:
+    A: output of activation
+    """
     A = np.maximum(0, Z)
     return A
 
 
 def initialize_parameters(layer_dims):
     """
-	:param layer_dims: list,每一层单元的个数（维度）
-	:return:dictionary,存储参数w1,w2,...,wL,b1,...,bL
-	"""
+    :param layer_dims: list,每一层单元的个数（维度）
+    :return:dictionary,存储参数w1,w2,...,wL,b1,...,bL
+    """
     np.random.seed(3)
     L = len(layer_dims)  # the number of layers in the network
     parameters = {}
@@ -150,5 +150,5 @@ def forward_propagation(initialization="he"):
 
 
 if __name__ == '__main__':
-    init_type=input("Please input parameters initiate type:")
+    init_type = input("Please input parameters initiate type:")
     forward_propagation(init_type)
