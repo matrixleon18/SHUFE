@@ -20,6 +20,7 @@ torch.backends.cudnn.deterministic = True
 # 设置 GPU 优先
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+
 # 定义 PositionEncoding 模型
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
@@ -40,6 +41,7 @@ class PositionalEncoding(nn.Module):
         '''
         x = x + self.pe[:x.size(0), :]
         return self.dropout(x)
+
 
 # 定义 LSTM 模型
 class LSTMModel(nn.Module):
@@ -253,15 +255,22 @@ class LSTMModel(nn.Module):
 
         return predictions, h2_n, c2_n
 
+
 # 定义 RMSE 损失函数。因为torch没有。
 def RMSE(yhat, y):
     return torch.sqrt(torch.mean((yhat-y)**2))
 
 
-# 定义 MAPE 计算函数。平均绝对百分比误差： 不容易受极端值的影响  不受量纲影响，用百分率来衡量偏离的大小，MAPE 为0%表示完美模型，MAPE 大于 100 %则表示劣质模型。
+# 定义 MAPE 计算函数。平均绝对百分比误差：不受量纲影响。但y接近0时受极端值影响。为（0%）表示完美模型，MAPE 大于 （100%）则表示劣质模型。
 def MAPE(y_hat, y):
-    absolute_percent_error = (torch.abs(y_hat-y)+1e-7)/(torch.abs(y)+1e-7)
+    absolute_percent_error = (torch.abs(y_hat-y)+1e-9)/(torch.abs(y)+1e-9)
     return torch.mean(absolute_percent_error)
+
+
+# 定义 SMAPE 计算函数。修复了原始MAPE的缺点-它同时具有下限（0％）和上限（200％)
+def SMAPE(y_hat, y):
+    absolute_percent_error = (torch.abs(y_hat-y)+1e-7)/(torch.abs(y_hat)+torch.abs(y)+1e-7)
+    return 2.0 * torch.mean(absolute_percent_error)
 
 
 # 定义了 R2 的计算函数。决定系数：反映因变量的全部变异能通过回归关系被自变量解释的比例。
@@ -280,12 +289,12 @@ def generate_data(in_file_name: str):
     dataset = dataset.fillna(0)                                                  # 这句话可有可无
 
     # 将数据按照BATCH_SIZE的窗口进行滑动，每个窗口数据做一组
-    TRAIN_VALIDATION_RATIO = 0.9                                                 # 取 90% 的数据为训练集
-    TRAIN_BATCH_SIZE = 40                                                        # 设40个seq为一个batch
-    TEST_BATCH_SIZE = 1                                                          # 只留一个test的batch
-    SEQ_LENGTH = 25                                                              # 定义每个time sequence取前25个序列数据来预测。取太大效果反而不好。
+    TRAIN_VALIDATION_RATIO = 0.9                                                 # 除了test的数据，剩下的数据划分为Train和Valid两个部分，其中train占据了 90%
+    TRAIN_BATCH_SIZE = 40                                                        # 设40个seq为一个batch                                          batch : [seq0, seq1, seq2, ... seq39]
+    TEST_BATCH_COUNT = 1                                                         # 不管test的batch多大，test中只保留一个batch
+    SEQ_LENGTH = 25                                                              # 定义每个time sequence取前25个序列数据来预测。取太大效果反而不好。  sequence: [element0, element1, ... , element24]
     Y_DIM = 1                                                                    # 预测的值就是1维的一个数字.需要被预测的时间序列就1个。如果需要预测未来多个时间序列，要用Seq2Seq模型
-    X_DIM = dataset.shape[1]-Y_DIM                                               # 输入的sequence里每个element的维度数量，也是encoder的input_dim
+    X_DIM = dataset.shape[1]-Y_DIM                                               # 输入的sequence里每个element的维度数量，也是encoder的input_dim。  element : [y_dim, x_dim0, x_dim1, ... x_dimn]
 
     # 把原有的序列数据进行格式转换
     # 一共生成了 n 个 batch数据，
@@ -388,7 +397,7 @@ def generate_model(train_x, train_y, valid_x, valid_y):
 
     # 训练 LSTM 模型;  ---- 这里的损失函数是计算Sequence最后一个元素的预测数据和真实数据差异
     model.train()
-    epoches = 1000
+    epochs = 200
     train_epoch_loss = 0
     train_epoch_loss_list = []
     valid_smallest_loss = 1
@@ -402,7 +411,7 @@ def generate_model(train_x, train_y, valid_x, valid_y):
     h0 = torch.zeros(NUM_LAYERS, train_x.shape[1], HIDDEN_SIZE).double().to(device)                     # NUM_LAYERS, TRAIN_BATCH_SIZE, HIDDEN_SIZE
     c0 = torch.zeros(NUM_LAYERS, train_x.shape[1], HIDDEN_SIZE).double().to(device)                     # NUM_LAYERS, TRAIN_BATCH_SIZE, HIDDEN_SIZE
 
-    for epoch in range(epoches):
+    for epoch in range(epochs):
         batch_loss = []
         batch_mape = []
         batch_r2   = []
@@ -411,7 +420,7 @@ def generate_model(train_x, train_y, valid_x, valid_y):
         train_epoch_r2 = 0
         train_pred_value_list = []
         train_real_value_list = []
-        train_batch_list = list(range(0,train_batch_count))
+        train_batch_list = list(range(0, train_batch_count))
         # random.shuffle(train_batch_list)
         for step in train_batch_list:
             train_pred, hn, cn = model(train_x[step], h0, c0)                                                    # pred: [batch_size, seq_len, out_dim]  但被修改成了 [batch_size, 1, out_dim]
@@ -453,8 +462,7 @@ def generate_model(train_x, train_y, valid_x, valid_y):
         valid_epoch_r2 = np.mean(batch_r2)
 
         if ((epoch+1) % 10) == 0:
-            # print("{} of {} epoch   train_loss: {:.3f}  train_MAPE: {:.2%}  valid_loss: {:.3f}".format(epoch, epoches, train_epoch_loss, train_epoch_mape, valid_epoch_loss))
-            print("{} of {} epoch   train_loss: {:.3f}  train_MAPE: {:.2%}   train_r2: {:.3f}  valid_loss: {:.3f}  valid_MAPE: {:.2%}   valid_r2: {:.3f}".format(epoch, epoches, train_epoch_loss, train_epoch_mape, train_epoch_r2, valid_epoch_loss, valid_epoch_mape, valid_epoch_r2))
+            print("{} of {} epoch   train_loss: {:.3f}  train_MAPE: {:.2%}   train_r2: {:.3f}  valid_loss: {:.3f}  valid_MAPE: {:.2%}   valid_r2: {:.3f}".format(epoch, epochs, train_epoch_loss, train_epoch_mape, train_epoch_r2, valid_epoch_loss, valid_epoch_mape, valid_epoch_r2))
 
         valid_epoch_loss_list.append(valid_epoch_loss)
         train_epoch_loss_list.append(train_epoch_loss)
@@ -491,36 +499,36 @@ def model_predict(test_x, test_y):
     for step in range(test_x.shape[0]):
         pred, hn, cn = model(test_x[step], h0, c0)
 
-        loss = loss_func(pred[:,-1,-1], test_y[step][:,-1,-1])               # Compare the all sequences' last element in one batch
+        loss = loss_func(pred[:, -1, -1], test_y[step][:, -1, -1])               # Compare the all sequences' last element in one batch
 
         if test_x.shape[0] > 1:
             actual_line.append(test_y[step][-1,-1].item())
-            pred_line.append(pred[-1,-1].item())
+            pred_line.append(pred[-1, -1].item())
         elif test_x.shape[0] == 1:
             actual_line = test_y[step].cpu().detach().flatten().numpy()        # Only plot the last sequence of test batch
-            pred_line   = pred[:,-1].cpu().detach().flatten().numpy()                # Only plot the last sequence of test batch
+            pred_line   = pred[:, -1].cpu().detach().flatten().numpy()                # Only plot the last sequence of test batch
 
     print("Test Loss : {:.3f}".format(loss.data))
     print("Prediction: {:.2f}".format(float(pred[-1,-1].data)))
     print("Actual:     {:.2f}".format(float(test_y[step][-1,-1].data)))
 
-    plt.plot(test_y[step,:,-1,-1].cpu().detach().flatten().numpy(), 'r--')
-    plt.plot(pred[:,-1].cpu().detach().flatten().numpy(), 'b-')
+    plt.plot(test_y[step, :, -1, -1].cpu().detach().flatten().numpy(), 'r--')
+    plt.plot(pred[:, -1].cpu().detach().flatten().numpy(), 'b-')
     plt.show()
-    print(test_y[step,:,-1,-1])
-    print(pred[:,-1])
+    print(test_y[step, :, -1, -1])
+    print(pred[:, -1])
 
-    return pred[:,-1]
+    return pred[:, -1]
 
 
 train_X, train_Y, valid_X, valid_Y, test_X, test_Y = generate_data("601229.csv")
 
-
 dl_model = generate_model(train_X, train_Y, valid_X, valid_Y)
 
+torch.save(dl_model, u'E:\\lstm-atten-cnn.pt')
 
 prediction = model_predict(test_x, test_y)
 
-
+# dl_model = torch.load(u'E:\\lstm-atten-cnn.pt')
 
 
