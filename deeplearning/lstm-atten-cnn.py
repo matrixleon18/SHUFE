@@ -258,6 +258,21 @@ def RMSE(yhat, y):
     return torch.sqrt(torch.mean((yhat-y)**2))
 
 
+# 定义 MAPE 计算函数。平均绝对百分比误差： 不容易受极端值的影响  不受量纲影响，用百分率来衡量偏离的大小，MAPE 为0%表示完美模型，MAPE 大于 100 %则表示劣质模型。
+def MAPE(y_hat, y):
+    absolute_percent_error = (torch.abs(y_hat-y)+1e-7)/(torch.abs(y)+1e-7)
+    return torch.mean(absolute_percent_error)
+
+
+# 定义了 R2 的计算函数。决定系数：反映因变量的全部变异能通过回归关系被自变量解释的比例。
+# R2<=1，R2为1时说明预测模型不犯任何错误；R2为0时说明预测模型等于基准模型；R2小于0说明预测模型不如基准模型，可能数据不存在任何线性关系。
+def R2(y_hat, y):
+    y_mean = torch.mean(y)
+    ss_tot = torch.sum((y - y_mean) ** 2)
+    ss_res = torch.sum((y - y_hat) ** 2)
+    r2 = 1 - ss_res / ss_tot
+    return r2
+
 # 定义生成数据函数
 def generate_data(in_file_name: str):
     # 加载数据
@@ -365,7 +380,7 @@ def generate_model(train_x, train_y, valid_x, valid_y):
     NUM_LAYERS = 2
 
     model = LSTMModel(input_size=train_x.shape[3], hidden_dim_size=HIDDEN_SIZE, num_layers=NUM_LAYERS, seq_len=train_x.shape[2], output_dim_size=1).double().to(device)
-    LR = 1e-5
+    LR = 1e-4
     # loss_func = nn.MSELoss(reduction="mean")
     loss_func = RMSE
     optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=1e-6)
@@ -373,7 +388,7 @@ def generate_model(train_x, train_y, valid_x, valid_y):
 
     # 训练 LSTM 模型;  ---- 这里的损失函数是计算Sequence最后一个元素的预测数据和真实数据差异
     model.train()
-    epoches = 200
+    epoches = 1000
     train_epoch_loss = 0
     train_epoch_loss_list = []
     valid_smallest_loss = 1
@@ -389,7 +404,11 @@ def generate_model(train_x, train_y, valid_x, valid_y):
 
     for epoch in range(epoches):
         batch_loss = []
+        batch_mape = []
+        batch_r2   = []
         train_epoch_loss = 0
+        train_epoch_mape = 0
+        train_epoch_r2 = 0
         train_pred_value_list = []
         train_real_value_list = []
         train_batch_list = list(range(0,train_batch_count))
@@ -398,31 +417,44 @@ def generate_model(train_x, train_y, valid_x, valid_y):
             train_pred, hn, cn = model(train_x[step], h0, c0)                                                    # pred: [batch_size, seq_len, out_dim]  但被修改成了 [batch_size, 1, out_dim]
             # h0, c0 = hn.detach(), cn.detach()
             loss = loss_func(train_pred[:, -1, -1], train_y[step][:, -1, -1])                                    # 取batch里每个sequence最后一个预测输出来和实际
-            train_pred_value_list.extend(list(train_pred[:, -1].cpu().detach().flatten().numpy() ))
-            train_real_value_list.extend(list(train_y[step, :, -1, -1].cpu().detach().flatten().numpy() ))
+            train_pred_value_list.extend(list(train_pred[:, -1, -1].cpu().detach().flatten().numpy() ))
+            train_real_value_list.extend(list(train_y[step][:, -1, -1].cpu().detach().flatten().numpy() ))
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=20, norm_type=2)
             optimizer.step()
             batch_loss.append(loss.cpu().data.numpy())
-        # print(batch_loss)
+            batch_mape.append(MAPE(train_pred[:, -1, -1], train_y[step][:, -1, -1]).item())
+            batch_r2.append(R2(train_pred[:, -1, -1], train_y[step][:, -1, -1]).item())
+        # print(batch_mape)
         train_epoch_loss = np.mean(batch_loss)
+        train_epoch_mape = np.mean(batch_mape)
+        train_epoch_r2 = np.mean(batch_r2)
 
         batch_loss = []
+        batch_mape = []
+        batch_r2 = []
         valid_epoch_loss = 0
+        valid_epoch_mape = 0
+        valid_epoch_r2 = 0
         valid_pred_value_list = []
         valid_real_value_list = []
         for step in range(valid_batch_count):
             valid_pred, hn, cn = model(valid_x[step], h0, c0)
             loss = loss_func(valid_pred[:, -1, -1], valid_y[step][:, -1, -1])
-            valid_pred_value_list.extend(list(valid_pred[:,-1].cpu().detach().flatten().numpy()))
-            valid_real_value_list.extend(list(valid_y[step,:,-1,-1].cpu().detach().flatten().numpy()))
+            valid_pred_value_list.extend(list(valid_pred[:, -1, -1].cpu().detach().flatten().numpy()))
+            valid_real_value_list.extend(list(valid_y[step, :, -1, -1].cpu().detach().flatten().numpy()))
             batch_loss.append(loss.cpu().data.numpy())
+            batch_mape.append(MAPE(valid_pred[:, -1, -1], valid_y[step][:, -1, -1]).item())
+            batch_r2.append(R2(valid_pred[:, -1, -1], valid_y[step][:, -1, -1]).item())
         # print(batch_loss)
         valid_epoch_loss = np.mean(batch_loss)
+        valid_epoch_mape = np.mean(batch_mape)
+        valid_epoch_r2 = np.mean(batch_r2)
 
-        if ((epoch+1) %10) == 0:
-            print("{} of {} epoch   train_loss: {:.3f}   valid_loss: {:.3f}".format(epoch, epoches, train_epoch_loss, valid_epoch_loss))
+        if ((epoch+1) % 10) == 0:
+            # print("{} of {} epoch   train_loss: {:.3f}  train_MAPE: {:.2%}  valid_loss: {:.3f}".format(epoch, epoches, train_epoch_loss, train_epoch_mape, valid_epoch_loss))
+            print("{} of {} epoch   train_loss: {:.3f}  train_MAPE: {:.2%}   train_r2: {:.3f}  valid_loss: {:.3f}  valid_MAPE: {:.2%}   valid_r2: {:.3f}".format(epoch, epoches, train_epoch_loss, train_epoch_mape, train_epoch_r2, valid_epoch_loss, valid_epoch_mape, valid_epoch_r2))
 
         valid_epoch_loss_list.append(valid_epoch_loss)
         train_epoch_loss_list.append(train_epoch_loss)
@@ -472,12 +504,13 @@ def model_predict(test_x, test_y):
     print("Prediction: {:.2f}".format(float(pred[-1,-1].data)))
     print("Actual:     {:.2f}".format(float(test_y[step][-1,-1].data)))
 
-
     plt.plot(test_y[step,:,-1,-1].cpu().detach().flatten().numpy(), 'r--')
     plt.plot(pred[:,-1].cpu().detach().flatten().numpy(), 'b-')
     plt.show()
     print(test_y[step,:,-1,-1])
     print(pred[:,-1])
+
+    return pred[:,-1]
 
 
 train_X, train_Y, valid_X, valid_Y, test_X, test_Y = generate_data("601229.csv")
@@ -486,7 +519,8 @@ train_X, train_Y, valid_X, valid_Y, test_X, test_Y = generate_data("601229.csv")
 dl_model = generate_model(train_X, train_Y, valid_X, valid_Y)
 
 
-prediction = model_preidct(test_x, test_y)
+prediction = model_predict(test_x, test_y)
+
 
 
 
