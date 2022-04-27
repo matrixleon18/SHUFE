@@ -263,7 +263,7 @@ def RMSE(yhat, y):
 
 # 定义 MAPE 计算函数。平均绝对百分比误差：不受量纲影响。但y接近0时受极端值影响。为（0%）表示完美模型，MAPE 大于 （100%）则表示劣质模型。
 def MAPE(y_hat, y):
-    absolute_percent_error = (torch.abs(y_hat-y)+1e-9)/(torch.abs(y)+1e-9)
+    absolute_percent_error = (torch.abs(y_hat-y)+1e-7)/(torch.abs(y)+1e-7)
     return torch.mean(absolute_percent_error)
 
 
@@ -282,8 +282,18 @@ def R2(y_hat, y):
     r2 = 1 - ss_res / ss_tot
     return r2
 
-# 定义生成数据函数
-def generate_data(in_file_name: str):
+# 定义生成train,valid,test数据函数
+def generate_tvt_data(in_file_name: str):
+    """
+    定义从文件生成 train-valid-test 数据的函数
+    :param in_file_name: 输入的csv文件名，例如： "e://601229.csv"
+    :return:    train_x:
+                train_y:
+                valid_x:
+                valid_y:
+                test_x:
+                test_y:
+    """
     # 加载数据
     dataset = pd.read_csv(in_file_name, index_col=0)
     dataset = dataset.fillna(0)                                                  # 这句话可有可无
@@ -374,6 +384,65 @@ def generate_data(in_file_name: str):
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 
 
+def generate_tt_data(in_file_name: str):
+    """
+    定义从文件生成 train-test 数据的函数
+    :param in_file_name:
+    :return:    train_x:
+                train_y:
+                test_x:
+                test_y:
+    """
+    # 加载数据
+    dataset = pd.read_csv(in_file_name, index_col=0)
+    dataset = dataset.fillna(0)                                                  # 这句话可有可无
+
+    # 将数据按照BATCH_SIZE的窗口进行滑动，每个窗口数据做一组
+    TRAIN_VALIDATION_RATIO = 0.9                                                 # 除了test的数据，剩下的数据划分为Train和Valid两个部分，其中train占据了 90%
+    TRAIN_BATCH_SIZE = 40                                                        # 设40个seq为一个batch                                          batch : [seq0, seq1, seq2, ... seq39]
+    TEST_BATCH_COUNT = 1                                                         # 不管test的batch多大，test中只保留一个batch
+    SEQ_LENGTH = 25                                                              # 定义每个time sequence取前25个序列数据来预测。取太大效果反而不好。  sequence: [element0, element1, ... , element24]
+    Y_DIM = 1                                                                    # 预测的值就是1维的一个数字.需要被预测的时间序列就1个。如果需要预测未来多个时间序列，要用Seq2Seq模型
+    X_DIM = dataset.shape[1]-Y_DIM                                               # 输入的sequence里每个element的维度数量，也是encoder的input_dim。  element : [y_dim, x_dim0, x_dim1, ... x_dimn]
+
+    # 把原有的序列数据进行格式转换
+    # 一共生成了 n 个 batch数据，
+    # 每个batch有 batch_size 个 sequence，
+    # 每个sequence有 seq_len 个 element，
+    # 每个element有 X_DIM 个feature
+    rolling_data = pd.DataFrame()
+    for i in dataset.rolling(SEQ_LENGTH):                                        # 在原有数据上按照窗口大小为 seq_len 进行平移。窗口数据格式为[seq_len, X_DIM+Y_DIM]
+        if i.shape[0] == SEQ_LENGTH:                                             # 如果得到的窗口数据的第一维和 seq_len 一样宽，说明数据完整。
+            rolling_data = rolling_data.append(i)                                # 将这个完整的窗口数据追加到 dataframe 后面去。数据格式为 [seq_count, seq_len, x_dim+y_dim]
+
+    rolling_data = rolling_data.values.reshape(-1, SEQ_LENGTH, X_DIM+Y_DIM)      # 变形后的数据一共是 [seq_count x seq_len x xy_dim]
+
+    print("rolling_data shape: {}".format(rolling_data.shape))                   # 现在数据的shape就是 (seq_count, seq_len, xy_dim)
+    print("seq count: {}".format(rolling_data.shape[0]))                         # 所以一共有seq_count个二维数据，其中二维数据里有seq_len行，每行中元素是x+1维 （包括y）
+    print("seq length: {}".format(SEQ_LENGTH))                                   # 这个seq_len是手动定义的。
+
+    # 把rolling_data再分割为 train / test 就再预测
+    # 既然 预测值 和时序相关性很高，可以考虑太早的零星数据对于test影响不大，可以删掉
+    print(rolling_data.shape)
+    print(TRAIN_BATCH_SIZE)
+    print(((rolling_data.shape[0]-1)//TRAIN_BATCH_SIZE)*TRAIN_BATCH_SIZE)
+    rolling_data = rolling_data[-((rolling_data.shape[0]-1)//TRAIN_BATCH_SIZE)*TRAIN_BATCH_SIZE-1:,]
+    print(rolling_data.shape)
+
+    train = rolling_data[:-1].reshape(-1, TRAIN_BATCH_SIZE, SEQ_LENGTH, X_DIM+Y_DIM)                    # 把数据转成 tain_batch_count x TRAIN_BATCH_SIZE x seq_len x in_dim 格式
+    test  = rolling_data[-1:].reshape(1, 1, SEQ_LENGTH, X_DIM+Y_DIM)                     # 把数据转成 test_batch_count x TEST_BATCH_SIZE x seq_len x in_dim 格式
+
+    train = torch.tensor(train).to(device)
+    test  = torch.tensor(test).to(device)
+
+    train_x, train_y = train[:,:,:,Y_DIM:], train[:,:,-1:,0:Y_DIM]           # [train_batch_count, batch_size, sequence_length, XorY dimission]
+    test_x,  test_y  = test[:,:,:, Y_DIM:],  test[:,:,-1:,0:Y_DIM]           # [train_batch_count, batch_size, sequence_length, XorY dimission]
+    print(train_x.shape, train_y.shape)
+    print(test_x.shape, test_y.shape)
+
+    return train_x, train_y, test_x, test_y
+
+
 # 定义生成模型函数
 def generate_model(train_x, train_y, valid_x, valid_y):
     """
@@ -462,7 +531,7 @@ def generate_model(train_x, train_y, valid_x, valid_y):
         valid_epoch_r2 = np.mean(batch_r2)
 
         if ((epoch+1) % 10) == 0:
-            print("{} of {} epoch   train_loss: {:.3f}  train_MAPE: {:.2%}   train_r2: {:.3f}  valid_loss: {:.3f}  valid_MAPE: {:.2%}   valid_r2: {:.3f}".format(epoch, epochs, train_epoch_loss, train_epoch_mape, train_epoch_r2, valid_epoch_loss, valid_epoch_mape, valid_epoch_r2))
+            print("{} of {} epoch \t train_loss: {:.3f} \t train_MAPE: {:.2%} \t train_r2: {:.3f} \t valid_loss: {:.3f} \t valid_MAPE: {:.2%} \t valid_r2: {:.3f}".format(epoch, epochs, train_epoch_loss, train_epoch_mape, train_epoch_r2, valid_epoch_loss, valid_epoch_mape, valid_epoch_r2))
 
         valid_epoch_loss_list.append(valid_epoch_loss)
         train_epoch_loss_list.append(train_epoch_loss)
@@ -521,14 +590,41 @@ def model_predict(test_x, test_y):
     return pred[:, -1]
 
 
-train_X, train_Y, valid_X, valid_Y, test_X, test_Y = generate_data("601229.csv")
+if __name__ == "__main__":
+    option = input(" [1] Train-Test Model \n [2] Train-Valid-Test Model\n [3] Load Model predict \n Please select your train model option (default [1]):")
+    if int(option) in [1, 2, 3]:
+        option = int(option)
+    else:
+        option = 1
 
-dl_model = generate_model(train_X, train_Y, valid_X, valid_Y)
+    if option == 1:
+        print("Use train-test to train model")
+        train_X, train_Y, test_X, test_Y = generate_tt_date("601229.csv")
 
-torch.save(dl_model, u'E:\\lstm-atten-cnn.pt')
+        dl_model = generate_model(train_X, train_Y, test_X, test_Y)
 
-prediction = model_predict(test_x, test_y)
+        prediction = model_predict(test_X, test_Y)
+    elif option == 2:
+        print("Use train-valid-test to train model")
+        train_X, train_Y, valid_X, valid_Y, test_X, test_Y = generate_tvt_data("601229.csv")
 
-# dl_model = torch.load(u'E:\\lstm-atten-cnn.pt')
+        dl_model = generate_model(train_X, train_Y, valid_X, valid_Y)
+
+        prediction = model_predict(test_X, test_Y)
+    elif option == 3:
+        print("Load Model and Prediction")
+        # train_X, train_Y, valid_X, valid_Y, test_X, test_Y = generate_tvt_data("601229.csv")
+        train_X, train_Y, test_X, test_Y = generate_tt_data("601229.csv")
+        dl_model = torch.load(u'E:\\lstm-atten-cnn.pth')
+
+        h0 = torch.zeros(2, test_X.shape[1], 1024).double().to(device)
+        c0 = torch.zeros(2, test_X.shape[1], 1024).double().to(device)
+        pred, hn, cn = dl_model(test_X[-1], h0, c0)
+
+        print("Prediction is {}".format(pred))
+
+    torch.save(dl_model, u'E:\\lstm-atten-cnn.pth')
+
+
 
 
